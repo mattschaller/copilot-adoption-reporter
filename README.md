@@ -29,6 +29,12 @@ copilot-adoption-reporter --org my-org --teams --format json
 # Write to file
 copilot-adoption-reporter --org my-org --out report.md
 
+# Per-user seat activity
+copilot-adoption-reporter --org my-org --seats
+
+# Seats as CSV (e.g. to find inactive users)
+copilot-adoption-reporter --org my-org --seats --format csv
+
 # Pipe to other tools
 copilot-adoption-reporter --org my-org --format csv | csvlook
 ```
@@ -40,6 +46,7 @@ copilot-adoption-reporter --org my-org --format csv | csvlook
 | `--org <org>` | GitHub organization (required) | — |
 | `--token <token>` | GitHub PAT with `copilot` scope | `GITHUB_TOKEN` env |
 | `--teams` | Include per-team breakdown | `false` |
+| `--seats` | Show per-user seat activity | `false` |
 | `--since <YYYY-MM-DD>` | Start date | 28 days ago |
 | `--until <YYYY-MM-DD>` | End date | yesterday |
 | `--format md\|csv\|json` | Output format | `md` |
@@ -49,6 +56,8 @@ copilot-adoption-reporter --org my-org --format csv | csvlook
 
 Your GitHub PAT needs the `manage_billing:copilot` or `copilot` scope (classic PAT), or the **"GitHub Copilot Business"** read permission (fine-grained PAT).
 
+For `--seats`, your token also needs access to the billing/seats endpoint (same scope covers it). For `--teams`, you additionally need `read:org` (classic) or **"Members — Read"** (fine-grained).
+
 ## Output Formats
 
 **Markdown** (default): Headline table with period-over-period deltas, optional team breakdown, top languages and editors.
@@ -56,6 +65,16 @@ Your GitHub PAT needs the `manage_billing:copilot` or `copilot` scope (classic P
 **CSV**: One row per day with columns for all key metrics. Includes a `team` column when `--teams` is used.
 
 **JSON**: Full `CopilotWeeklyRollup` object with all computed fields.
+
+### Seats (`--seats`)
+
+When `--seats` is used, the report includes per-user activity data from the Copilot billing/seats API:
+
+- **Markdown**: Adds a "Seats" table showing each user's last activity date, days since last use, editor, and active/inactive status.
+- **CSV**: Outputs one row per user with login, last activity timestamp, editor, and status.
+- **JSON**: Array of seat objects with all fields.
+
+Users are marked **Inactive** if they haven't used Copilot in over 14 days or have never used it.
 
 ## Delta Computation
 
