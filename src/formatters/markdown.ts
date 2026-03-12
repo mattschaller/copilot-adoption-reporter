@@ -1,4 +1,4 @@
-import type { CopilotWeeklyRollup } from '../types.js';
+import type { CopilotWeeklyRollup, CopilotSeat } from '../types.js';
 
 function pct(n: number): string {
   return `${(n * 100).toFixed(1)}%`;
@@ -13,7 +13,7 @@ function delta(value: number, isPercent = false): string {
   return `${sign}${value}`;
 }
 
-export function formatMarkdown(rollup: CopilotWeeklyRollup): string {
+export function formatMarkdown(rollup: CopilotWeeklyRollup, seats?: CopilotSeat[]): string {
   const lines: string[] = [];
 
   lines.push(`# Copilot Adoption Report: ${rollup.org}`);
@@ -68,6 +68,40 @@ export function formatMarkdown(rollup: CopilotWeeklyRollup): string {
   if (rollup.topEditors.length > 0) {
     lines.push('');
     lines.push(`**Top Editors:** ${rollup.topEditors.map((e) => `${e.name} (${e.users} users)`).join(', ')}`);
+  }
+
+  if (seats && seats.length > 0) {
+    const now = new Date();
+    const sorted = [...seats].sort((a, b) => {
+      if (!a.lastActivityAt && !b.lastActivityAt) return 0;
+      if (!a.lastActivityAt) return 1;
+      if (!b.lastActivityAt) return -1;
+      return new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime();
+    });
+
+    lines.push('');
+    lines.push('## Seats');
+    lines.push('');
+    lines.push('| User | Last Activity | Days Ago | Editor | Status |');
+    lines.push('| --- | --- | ---: | --- | --- |');
+    for (const seat of sorted) {
+      const lastActivity = seat.lastActivityAt
+        ? new Date(seat.lastActivityAt).toISOString().slice(0, 10)
+        : 'Never';
+      const daysAgo = seat.lastActivityAt
+        ? Math.round((now.getTime() - new Date(seat.lastActivityAt).getTime()) / (1000 * 60 * 60 * 24))
+        : null;
+      const daysAgoStr = daysAgo !== null ? String(daysAgo) : '—';
+      const editor = seat.lastActivityEditor ?? '—';
+      const status = seat.pendingCancellationDate
+        ? 'Cancelling'
+        : daysAgo === null
+          ? 'Inactive'
+          : daysAgo > 14
+            ? 'Inactive'
+            : 'Active';
+      lines.push(`| ${seat.login} | ${lastActivity} | ${daysAgoStr} | ${editor} | ${status} |`);
+    }
   }
 
   lines.push('');

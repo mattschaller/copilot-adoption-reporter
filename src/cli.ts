@@ -4,6 +4,7 @@ export interface CliOptions {
   org: string;
   token: string;
   teams: boolean;
+  seats: boolean;
   since: string;
   until: string;
   format: 'md' | 'csv' | 'json';
@@ -20,6 +21,7 @@ export function createProgram(): Command {
     .requiredOption('--org <org>', 'GitHub organization')
     .option('--token <token>', 'GitHub PAT (or set GITHUB_TOKEN)', process.env.GITHUB_TOKEN)
     .option('--teams', 'Include per-team breakdown', false)
+    .option('--seats', 'Show per-user seat activity', false)
     .option('--since <date>', 'Start date (YYYY-MM-DD)', defaultSince())
     .option('--until <date>', 'End date (YYYY-MM-DD)', defaultUntil())
     .option('--format <format>', 'Output format: md, csv, json', 'md')

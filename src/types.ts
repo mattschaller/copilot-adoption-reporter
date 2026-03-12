@@ -86,6 +86,16 @@ export interface CopilotWeeklyRollup {
   byTeam?: TeamRollup[];
 }
 
+export interface CopilotSeat {
+  login: string;
+  lastActivityAt: string | null;
+  lastActivityEditor: string | null;
+  lastAuthenticatedAt: string | null;
+  createdAt: string;
+  planType: string;
+  pendingCancellationDate: string | null;
+}
+
 export interface TeamRollup {
   team: string;
   totalActiveUsers: number;

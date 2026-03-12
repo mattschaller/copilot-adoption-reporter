@@ -1,12 +1,12 @@
 import { writeFileSync } from 'node:fs';
 import { createProgram } from './cli.js';
 import type { CliOptions } from './cli.js';
-import { fetchOrgMetrics, fetchTeamMetrics, fetchTeams } from './api.js';
+import { fetchOrgMetrics, fetchTeamMetrics, fetchTeams, fetchSeats } from './api.js';
 import { computeRollup, computeTeamRollup } from './rollup.js';
 import { formatMarkdown } from './formatters/markdown.js';
-import { formatCsv } from './formatters/csv.js';
+import { formatCsv, formatSeatsCsv } from './formatters/csv.js';
 import { formatJson } from './formatters/json.js';
-import type { CopilotDayMetrics } from './types.js';
+import type { CopilotDayMetrics, CopilotSeat } from './types.js';
 
 async function main() {
   const program = createProgram();
@@ -66,19 +66,40 @@ async function main() {
     }
   }
 
+  // Fetch seat data if requested
+  let seats: CopilotSeat[] | undefined;
+  if (opts.seats) {
+    seats = await fetchSeats(opts.org, opts.token);
+  }
+
   // Format output
   let output: string;
-  switch (opts.format) {
-    case 'csv':
-      output = formatCsv({ days: currentDays, teamDays });
-      break;
-    case 'json':
-      output = formatJson(rollup);
-      break;
-    case 'md':
-    default:
-      output = formatMarkdown(rollup);
-      break;
+  if (opts.seats && seats) {
+    switch (opts.format) {
+      case 'csv':
+        output = formatSeatsCsv(seats);
+        break;
+      case 'json':
+        output = JSON.stringify(seats, null, 2) + '\n';
+        break;
+      case 'md':
+      default:
+        output = formatMarkdown(rollup, seats);
+        break;
+    }
+  } else {
+    switch (opts.format) {
+      case 'csv':
+        output = formatCsv({ days: currentDays, teamDays });
+        break;
+      case 'json':
+        output = formatJson(rollup);
+        break;
+      case 'md':
+      default:
+        output = formatMarkdown(rollup);
+        break;
+    }
   }
 
   // Write output

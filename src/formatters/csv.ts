@@ -1,4 +1,4 @@
-import type { CopilotDayMetrics } from '../types.js';
+import type { CopilotDayMetrics, CopilotSeat } from '../types.js';
 
 interface CsvOptions {
   days: CopilotDayMetrics[];
@@ -58,6 +58,27 @@ function aggregateDay(day: CopilotDayMetrics) {
     chats,
     pr_summaries: prSummaries,
   };
+}
+
+export function formatSeatsCsv(seats: CopilotSeat[]): string {
+  const lines: string[] = [];
+  lines.push('login,last_activity_at,last_activity_editor,last_authenticated_at,created_at,plan_type,status');
+  const now = new Date();
+  for (const seat of seats) {
+    const daysAgo = seat.lastActivityAt
+      ? Math.round((now.getTime() - new Date(seat.lastActivityAt).getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+    const status = seat.pendingCancellationDate
+      ? 'cancelling'
+      : daysAgo === null
+        ? 'inactive'
+        : daysAgo > 14
+          ? 'inactive'
+          : 'active';
+    lines.push(`${seat.login},${seat.lastActivityAt ?? ''},${seat.lastActivityEditor ?? ''},${seat.lastAuthenticatedAt ?? ''},${seat.createdAt},${seat.planType},${status}`);
+  }
+  lines.push('');
+  return lines.join('\n');
 }
 
 export function formatCsv(options: CsvOptions): string {
